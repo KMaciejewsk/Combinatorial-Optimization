@@ -74,7 +74,7 @@ def nearestNeighbour(matrix):
             distance += matrix[route2[-2]][available_nodes[0]]
     distance += matrix[route1[-1]][route1[0]]
     distance += matrix[route2[-1]][route2[0]]
-    return distance, route1, route2
+    return distance#, route1, route2
 
 def generate_chromosome(matrix):
     chromosome = []
@@ -103,13 +103,25 @@ def mutation(chromosome, matrix):
     chromosome[mutation_point1], chromosome[mutation_point2] = chromosome[mutation_point2], chromosome[mutation_point1]
     return chromosome
 
+def fitness(chromosome, matrix):
+    distance = 0
+    for i in range(int(len(chromosome) / 2) - 1):
+        distance += matrix[chromosome[i]][chromosome[i + 1]]
+    distance += matrix[chromosome[int(len(chromosome) / 2) - 1]][chromosome[0]]
+    for i in range(int(len(chromosome) / 2), len(chromosome) - 1):
+        distance += matrix[chromosome[i]][chromosome[i + 1]]
+    distance += matrix[chromosome[int(len(chromosome)) - 1]][chromosome[int(len(chromosome) / 2)]]
+    return distance, chromosome
+
+
 def geneticAlgorithm(matrix):
     population = []
+    fitnesses = []
     for i in range(100):
         population.append(generate_chromosome(matrix))
     best_distance = float('inf')
     best_chromosome = None
-    for i in range(1000):
+    for i in range(400):
         new_population = []
         for j in range(100):
             chromosome1 = random.choice(population)
@@ -119,23 +131,11 @@ def geneticAlgorithm(matrix):
             new_chromosome2 = mutation(new_chromosome2, matrix)
             new_population.append(new_chromosome1)
             new_population.append(new_chromosome2)
-        population = new_population
-        for chromosome in population:
-            distance = 0
-            for i in range(int(len(chromosome)/2) - 1):
-                distance += matrix[chromosome[i]][chromosome[i + 1]]
-            distance += matrix[chromosome[int(len(chromosome) / 2) - 1]][chromosome[0]]
-            for i in range(int(len(chromosome) / 2), len(chromosome) - 1):
-                distance += matrix[chromosome[i]][chromosome[i + 1]]
-            distance += matrix[chromosome[int(len(chromosome)) - 1]][chromosome[int(len(chromosome) / 2)]]
-            if distance < best_distance:
-                best_distance = distance
-                best_chromosome = chromosome
-    return best_distance, best_chromosome
-
-
-for i in range(10,1010):
-    matrix = generateGraph(i)
-    start = time.time()
-    nearestNeighbour(matrix)
-    print(i, time.time() - start)
+            fitnesses.append(fitness(new_chromosome1, matrix))
+            fitnesses.append(fitness(new_chromosome2, matrix))
+        fitnesses.sort(key=lambda x: x[0])
+        if fitnesses[0][0] < best_distance:
+            best_distance = fitnesses[0][0]
+            best_chromosome = fitnesses[0][1]
+        population = [i[1] for i in fitnesses[:100]]
+    return best_distance#, best_chromosome
